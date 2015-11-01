@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * @file
+ * Provides module logic for Library Tools module.
+ */
+
+// Include required files.
+include_once "librarytools.admin.inc";
+include_once "librarytools.library.inc";
+include_once "librarytools.libraries.inc";
+include_once "librarytools.theme.inc";
+
+/**
+ * Callback for admin/structure/libraries menu hook.
+ */
+function librarytools_libraries_summary() {
+  $output = '';
+
+  if (module_exists('libraries')) {
+    $output .= '<h2>' . t('Available <code>hook_libraries_info()</code> libraries') . '</h2>';
+    $output .= _librarytools_hook_libraries_info_libraries();
+  }
+  $output .= '<h2>' . t('Available <code>hook_library()</code> libraries') . '</h2>';
+  $output .= _librarytools_hook_library_libraries();
+
+  return $output;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function librarytools_menu() {
+  return array(
+    // Library information page.
+    'admin/structure/libraries' => array(
+      'title' => 'Available Libraries',
+      'description' => 'The libraries in the following table are available for use on this site',
+      'page callback' => 'librarytools_libraries_summary',
+      'access arguments' => 'administer librarytools',
+      'type' => MENU_NORMAL_ITEM,
+    ),
+  );
+}
+
+/**
+ * Implements template_preprocess_page().
+ */
+function librarytools_preprocess_page(&$variables) {
+  if (strpos('admin/structure/libraries', drupal_get_path_alias()) === 0) {
+    dpm('Fuck yeah!');
+    drupal_add_css(drupal_get_path('module', 'librarytools') . '/css/librarytools.admin.css');
+  }
+}
+
+/**
+ * Implmenents hook_theme().
+ */
+function librarytools_theme() {
+  return array(
+    'librarytools_dependencies' => array(
+      'variables' => array(
+        'dependencies',
+      ),
+    ),
+    'librarytools_dependency' => array(
+      'variables' => array(
+        'dependency_name' => NULL,
+        'class_name' => NULL,
+        'status' => NULL,
+      ),
+    ),
+    'librarytools_title' => array(
+      'variables' => array(
+        'title' => NULL,
+      ),
+    ),
+  );
+}

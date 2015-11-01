@@ -127,7 +127,6 @@ function _librarytools_hook_library_libraries() {
 
   foreach ($result as $module) {
     if ($libraries = drupal_get_library($module->name)) {
-      kpr($libraries);
       foreach ($libraries as $library) {
         $rows[] = array(
           _librarytools_hook_library_table_cells($library, $libraries, $module, 'name'),

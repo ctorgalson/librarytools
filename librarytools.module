@@ -28,19 +28,66 @@ function librarytools_libraries_summary() {
 }
 
 /**
+ * Callback for admin/structure/libraries/%/info menu hook.
+ */
+function librarytools_library_info($library) {
+  // Page title.
+  reset($library);
+  $library_name = key($library);
+  drupal_set_title(t('Library info: @library_name', array('@library_name' => $library_name)));
+
+  // Content.
+  $content = !empty($library) ? kpr($library, TRUE) : t('No library name "@library" could be found.');
+
+  return $content;
+}
+
+/**
+ * Autoloader function for librarytools_library_info() function.
+ */
+function librarytools_library_info_load($library_name) {
+  // Sanitize the input.
+  $safe_library_name = check_plain($library_name);
+
+  // (Attempt to) explode the input.
+  $library_meta = explode(':', $safe_library_name);
+  $argument_count = count($library_meta);
+
+  // Attempt to load library by number of args and module existence.
+  if ($argument_count > 1) {
+    $library = drupal_get_library($library_meta[0], $library_meta[1]);
+  }
+  elseif (module_exists('libraries') && $argument_count == 1) {
+    $library = libraries_load($library_meta[0]);
+  }
+
+  return isset($library) ? array($library_meta[0] => $library) : FALSE;
+}
+
+/**
  * Implements hook_menu().
  */
 function librarytools_menu() {
-  return array(
-    // Library information page.
-    'admin/structure/libraries' => array(
-      'title' => 'Available Libraries',
-      'description' => 'The libraries in the following table are available for use on this site',
-      'page callback' => 'librarytools_libraries_summary',
-      'access arguments' => 'administer librarytools',
-      'type' => MENU_NORMAL_ITEM,
-    ),
+  $items = array();
+
+  // Library information page.
+  $items['admin/structure/libraries'] = array(
+    'access arguments' => 'administer librarytools',
+    'description' => 'The libraries in the following table are available for use on this site',
+    'page callback' => 'librarytools_libraries_summary',
+    'title' => 'Available Libraries',
+    'type' => MENU_NORMAL_ITEM,
   );
+
+  // Individual library information pages.
+  $items['admin/structure/libraries/%librarytools_library_info/info'] = array(
+    'access arguments' => 'administer librarytools',
+    'page arguments' => array(3),
+    'page callback' => 'librarytools_library_info',
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
 }
 
 /**
@@ -48,7 +95,6 @@ function librarytools_menu() {
  */
 function librarytools_preprocess_page(&$variables) {
   if (strpos('admin/structure/libraries', drupal_get_path_alias()) === 0) {
-    dpm('Fuck yeah!');
     drupal_add_css(drupal_get_path('module', 'librarytools') . '/css/librarytools.admin.css');
   }
 }

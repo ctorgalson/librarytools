@@ -11,6 +11,10 @@ include_once "librarytools.library.inc";
 include_once "librarytools.libraries.inc";
 include_once "librarytools.theme.inc";
 
+// Define constants.
+define('LIBRARYTOOLS_LIBRARIES_OVERVIEW', 'admin/structure/libraries');
+define('LIBRARYTOOLS_LIBRARY_INFO', 'admin/structure/libraries/%librarytools_library_info/info');
+
 /**
  * Callback for admin/structure/libraries menu hook.
  */
@@ -56,12 +60,14 @@ function librarytools_library_info_load($library_name) {
   // Attempt to load library by number of args and module existence.
   if ($argument_count > 1) {
     $library = drupal_get_library($library_meta[0], $library_meta[1]);
+    $library_name = $library['title'];
   }
   elseif (module_exists('libraries') && $argument_count == 1) {
     $library = libraries_load($library_meta[0]);
+    $library_name = $library['name'];
   }
 
-  return isset($library) ? array($library_meta[0] => $library) : FALSE;
+  return isset($library) ? array($library_name => $library) : FALSE;
 }
 
 /**
@@ -71,7 +77,7 @@ function librarytools_menu() {
   $items = array();
 
   // Library information page.
-  $items['admin/structure/libraries'] = array(
+  $items[LIBRARYTOOLS_LIBRARIES_OVERVIEW] = array(
     'access arguments' => 'administer librarytools',
     'description' => 'The libraries in the following table are available for use on this site',
     'page callback' => 'librarytools_libraries_summary',
@@ -80,7 +86,7 @@ function librarytools_menu() {
   );
 
   // Individual library information pages.
-  $items['admin/structure/libraries/%librarytools_library_info/info'] = array(
+  $items[LIBRARYTOOLS_LIBRARY_INFO] = array(
     'access arguments' => 'administer librarytools',
     'page arguments' => array(3),
     'page callback' => 'librarytools_library_info',

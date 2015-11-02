@@ -13,7 +13,8 @@ function _librarytools_hook_libraries_info_table_cells($library, $libraries, $ce
   $output = '';
   switch ($cell) {
     case 'name':
-      $output = theme('librarytools_title', array('title' => $libraries[$library]['name']));
+      $path = str_replace('%librarytools_library_info', $library, LIBRARYTOOLS_LIBRARY_INFO);
+      $output = theme('librarytools_title', array('title' => l($libraries[$library]['name'], $path)));
       break;
 
     case 'provider':

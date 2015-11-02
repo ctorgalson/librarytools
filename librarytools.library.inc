@@ -8,11 +8,12 @@
 /**
  * Helper function to generate content for cells of libraries table.
  */
-function _librarytools_hook_library_table_cells($library, $libraries, $module, $cell) {
+function _librarytools_hook_library_table_cells($library_name, $library, $libraries, $module, $cell) {
   $output = '';
   switch ($cell) {
     case 'name':
-      $output = theme('librarytools_title', array('title' => $library['title']));
+      $path = str_replace('%librarytools_library_info', $module->name . ':' . $library_name, LIBRARYTOOLS_LIBRARY_INFO);
+      $output = theme('librarytools_title', array('title' => l($library['title'], $path)));
       break;
 
     case 'provider':
@@ -127,16 +128,15 @@ function _librarytools_hook_library_libraries() {
 
   foreach ($result as $module) {
     if ($libraries = drupal_get_library($module->name)) {
-      kpr($libraries);
-      foreach ($libraries as $library) {
+      foreach ($libraries as $library_name => $library) {
         $rows[] = array(
-          _librarytools_hook_library_table_cells($library, $libraries, $module, 'name'),
-          _librarytools_hook_library_table_cells($library, $libraries, $module, 'provider'),
-          _librarytools_hook_library_table_cells($library, $libraries, $module, 'version'),
-          _librarytools_hook_library_table_cells($library, $libraries, $module, 'dependencies'),
-          _librarytools_hook_library_table_cells($library, $libraries, $module, 'files'),
-          _librarytools_hook_library_table_cells($library, $libraries, $module, 'path'),
-          _librarytools_hook_library_table_cells($library, $libraries, $module, 'links'),
+          _librarytools_hook_library_table_cells($library_name, $library, $libraries, $module, 'name'),
+          _librarytools_hook_library_table_cells($library_name, $library, $libraries, $module, 'provider'),
+          _librarytools_hook_library_table_cells($library_name, $library, $libraries, $module, 'version'),
+          _librarytools_hook_library_table_cells($library_name, $library, $libraries, $module, 'dependencies'),
+          _librarytools_hook_library_table_cells($library_name, $library, $libraries, $module, 'files'),
+          _librarytools_hook_library_table_cells($library_name, $library, $libraries, $module, 'path'),
+          _librarytools_hook_library_table_cells($library_name, $library, $libraries, $module, 'links'),
         );
       }
     }

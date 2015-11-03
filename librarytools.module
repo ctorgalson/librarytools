@@ -13,6 +13,8 @@ include_once "librarytools.theme.inc";
 
 // Define constants.
 define('LIBRARYTOOLS_LIBRARIES_OVERVIEW', 'admin/structure/libraries');
+define('LIBRARYTOOLS_LIBRARIES_OVERVIEW_TAB', 'admin/structure/libraries/overview ');
+define('LIBRARYTOOLS_LIBRARY_EXPORT_TAB', 'admin/structure/libraries/export');
 define('LIBRARYTOOLS_LIBRARY_INFO', 'admin/structure/libraries/%librarytools_library_info/info');
 
 /**
@@ -29,6 +31,25 @@ function librarytools_libraries_summary() {
   $output .= _librarytools_hook_library_libraries();
 
   return $output;
+}
+
+/**
+ * Callback for admin/structure/libraries/export.
+ */
+function librarytools_library_export() {
+  $form = array();
+
+  $form['librarytools_export_type'] = array(
+    '#description' => t('Choose which type of library to create.'),
+    '#options' => array(
+      'Drupal core library',
+      'Libraries module library',
+    ),
+    '#title' => t('Library type'),
+    '#type' => 'select',
+  );
+
+  return $form;
 }
 
 /**
@@ -78,16 +99,30 @@ function librarytools_menu() {
 
   // Library information page.
   $items[LIBRARYTOOLS_LIBRARIES_OVERVIEW] = array(
-    'access arguments' => 'administer librarytools',
+    'access arguments' => array('administer librarytools'),
     'description' => 'The libraries in the following table are available for use on this site',
     'page callback' => 'librarytools_libraries_summary',
-    'title' => 'Available Libraries',
+    'title' => 'Library Tools',
     'type' => MENU_NORMAL_ITEM,
+  );
+
+  // Default tab.
+  $items[LIBRARYTOOLS_LIBRARIES_OVERVIEW_TAB] = array(
+    'title' => 'Available Libraries',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items[LIBRARYTOOLS_LIBRARY_EXPORT_TAB] = array(
+    'access arguments' => array('administer librarytools'),
+    'page arguments' => array('librarytools_library_export'),
+    'page callback' => 'drupal_get_form',
+    'title' => 'Library Export',
+    'type' => MENU_LOCAL_TASK,
   );
 
   // Individual library information pages.
   $items[LIBRARYTOOLS_LIBRARY_INFO] = array(
-    'access arguments' => 'administer librarytools',
+    'access arguments' => array('administer librarytools'),
     'page arguments' => array(3),
     'page callback' => 'librarytools_library_info',
     'type' => MENU_CALLBACK,

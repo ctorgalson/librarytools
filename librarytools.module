@@ -34,25 +34,6 @@ function librarytools_libraries_summary() {
 }
 
 /**
- * Callback for admin/structure/libraries/export.
- */
-function librarytools_library_export() {
-  $form = array();
-
-  $form['librarytools_export_type'] = array(
-    '#description' => t('Choose which type of library to create.'),
-    '#options' => array(
-      'Drupal core library',
-      'Libraries module library',
-    ),
-    '#title' => t('Library type'),
-    '#type' => 'select',
-  );
-
-  return $form;
-}
-
-/**
  * Callback for admin/structure/libraries/%/info menu hook.
  */
 function librarytools_library_info($library) {

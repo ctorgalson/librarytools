@@ -113,6 +113,19 @@ function librarytools_menu() {
 }
 
 /**
+ * Implements template_preprocess_field().
+ */
+function librarytools_preprocess_field(&$variables) {
+  switch ($variables['element']['#bundle']) {
+    case 'librarytools_core_library':
+      if ($variables['element']['#field_type'] === 'text_long') {
+        $variables['theme_hook_suggestions'][] = 'field__librarytools__text_long';
+      }
+      break;
+  }
+}
+
+/**
  * Implements template_preprocess_page().
  */
 function librarytools_preprocess_page(&$variables) {
@@ -125,7 +138,9 @@ function librarytools_preprocess_page(&$variables) {
  * Implmenents hook_theme().
  */
 function librarytools_theme() {
-  return array(
+  $path_to_module = drupal_get_path('module', 'librarytools') . '/templates';
+
+  $items = array(
     'librarytools_dependencies' => array(
       'variables' => array(
         'dependencies',
@@ -143,5 +158,24 @@ function librarytools_theme() {
         'title' => NULL,
       ),
     ),
+    // Entity.
+    'librarytools_core_library' => array(
+      'variables' => array(
+        array(
+          'element' => NULL,
+        ),
+      ),
+      'template' => 'librarytools--library',
+      'path' => $path_to_module,
+    ),
   );
+
+  // Textarea fiels in entity.
+  $field__librarytools__text_long = isset($existing['field']) ? $existing['field'] : array();
+  $field__librarytools__text_long['path'] = $path_to_module;
+  $field__librarytools__text_long['template'] = 'field--librarytools--text-long';
+
+  $items['field__librarytools__text_long'] = $field__librarytools__text_long;
+
+  return $items;
 }

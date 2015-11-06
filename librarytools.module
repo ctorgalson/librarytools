@@ -6,7 +6,7 @@
  */
 
 // Include required files.
-include_once 'librarytoolsx.features.inc';
+include_once 'librarytools.features.inc';
 include_once "librarytools.admin.inc";
 include_once "librarytools.library.inc";
 include_once "librarytools.libraries.inc";

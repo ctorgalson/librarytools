@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * librarytoolsx.features.inc
+ * librarytools.features.inc
  */
 
 /**
  * Implements hook_eck_bundle_info().
  */
-function librarytoolsx_eck_bundle_info() {
+function librarytools_eck_bundle_info() {
   $items = array(
     'librarytools_core_library_librarytools_core_library' => array(
       'machine_name' => 'librarytools_core_library_librarytools_core_library',
@@ -22,7 +22,7 @@ function librarytoolsx_eck_bundle_info() {
 /**
  * Implements hook_eck_entity_type_info().
  */
-function librarytoolsx_eck_entity_type_info() {
+function librarytools_eck_entity_type_info() {
   $items = array(
     'librarytools_core_library' => array(
       'name' => 'librarytools_core_library',

@@ -114,6 +114,69 @@ function librarytools_menu() {
 }
 
 /**
+ * Implements template_preprocess_entity().
+ *
+ * @todo
+ *  - Transform yaml
+ */
+function librarytools_preprocess_entity(&$variables) {
+  switch ($variables['entity_type']) {
+    case 'librarytools_core_library':
+      // Get a wrapper for the entity.
+      $library_wrapper = $variables['elements']['#entity']->wrapper();
+
+      // Grab a bunch of properties.
+      $machine_name = $library_wrapper->field_core_machine_name->value();
+      $title = $library_wrapper->label();
+      $website = $library_wrapper->field_core_website->value();
+      $version = $library_wrapper->field_core_version->value();
+      $js = $library_wrapper->field_core_js->value();
+      $css = $library_wrapper->field_core_css->value();
+      $dependencies = $library_wrapper->field_core_dependencies->value();
+
+      // Define the library.
+      $library = array(
+        'title' => $title,
+        'website' => $website['display_url'],
+        'version' => $version,
+        'js' => $js,
+        'css' => $css,
+        'dependencies' => $dependencies,
+      );
+
+      // Define the basic structure for the on-page output.
+      $library_pattern = <<<EOT
+/**
+ * Implements hook_library().
+ */
+function MODULENAME_library() {
+  // Create libraries array.
+  \$libraries = array();
+
+  // Define library.
+  \$libraries['%s'] = %s;
+
+  // Return libraries array.
+  return \$libraries;
+}
+EOT;
+
+      // Produce the renderable array for the page.
+      $variables['export'] = array(
+        '#collapsed' => TRUE,
+        '#collapsible' => TRUE,
+        '#title' => t('Exportable code'),
+        '#type' => 'fieldset',
+        'content' => array(
+          '#type' => 'textarea',
+          '#value' => sprintf($library_pattern, $machine_name, var_export($library, TRUE)),
+        ),
+      );
+      break;
+  }
+}
+
+/**
  * Implements template_preprocess_field().
  */
 function librarytools_preprocess_field(&$variables) {
@@ -171,7 +234,7 @@ function librarytools_theme() {
     ),
   );
 
-  // Textarea fiels in entity.
+  // Textarea fields in entity.
   $field__librarytools__text_long = isset($existing['field']) ? $existing['field'] : array();
   $field__librarytools__text_long['path'] = $path_to_module;
   $field__librarytools__text_long['template'] = 'field--librarytools--text-long';

@@ -11,12 +11,133 @@ include_once "librarytools.admin.inc";
 include_once "librarytools.library.inc";
 include_once "librarytools.libraries.inc";
 include_once "librarytools.theme.inc";
+require_once DRUPAL_ROOT . base_path() . "sites/all/libraries/spyc/Spyc.php";
 
 // Define constants.
 define('LIBRARYTOOLS_LIBRARIES_OVERVIEW', 'admin/structure/libraries');
 define('LIBRARYTOOLS_LIBRARIES_OVERVIEW_TAB', 'admin/structure/libraries/overview ');
 define('LIBRARYTOOLS_LIBRARY_EXPORT_TAB', 'admin/structure/libraries/export');
 define('LIBRARYTOOLS_LIBRARY_INFO', 'admin/structure/libraries/%librarytools_library_info/info');
+
+/**
+ * Export code formatting helper function for arrays.
+ *
+ * Returns an array + assignment formatted according the Drupal coding standard.
+ * Works on nested arrays.
+ *
+ * @param array $array
+ *   An array for output.
+ * @param string $assignment
+ *   An assignment of the general form "$a = " or "$b => ".
+ * @param int $indent
+ *   Indent level for the current level of array.
+ * @param bool $top_level
+ *   Whether or not this is the outermost level of the array. The value of this
+ *   parameter determines whether or not the current pass will append a ";" to
+ *   the generated code.
+ *
+ * @return string
+ *   An array in string form, much like that produced by var_export(), but
+ *   conforming to Drupal's coding standards.
+ */
+function _librarytools_format_array($array, $assignment, $indent = 0, $top_level = TRUE) {
+  // Establish tab size, initial import. We're hardcoding the tab size because
+  // we're only dealing with one set of coding standards.
+  $tab = str_repeat(chr(32), 2);
+  $indent_string = str_repeat($tab, $indent);
+
+  // Output variables.
+  $before = '';
+  $output = '';
+  $after = '';
+
+  // We expect an array coming in.
+  if (is_array($array)) {
+    // Handle the outermost level.
+    //
+    // Add the semicolon if this is a top-level array.
+    $end_character = $top_level ? ';' : '';
+
+    // Create the assignment + operator.
+    $assignment = !empty($assignment) ? $indent_string . $assignment : '';
+
+    // The beginning of the array.
+    $before_pattern = '%sarray(';
+    $before = sprintf($before_pattern, $assignment);
+
+    // The end of the array.
+    $after_pattern = chr(10) . '%s)' . $end_character;
+    $after = sprintf($after_pattern, $indent_string);
+
+    // Everything from here on in needs a further indent.
+    $indent++;
+
+    // We'll need a common indent inside the loop.
+    $indent_string = str_repeat($tab, $indent);
+
+    // Loop through the rest of the incoming array.
+    foreach ($array as $key => $value) {
+      // Assignment patterns can be a) common, but b) vary according to type of
+      // $key.
+      $assignment_pattern = chr(10) . (is_numeric($key) ? '%s%s => ' : '%s"%s" => ');
+
+      if (!is_array($value)) {
+        // Here we have a relatively simple bit of string manipulation.
+        $item_pattern = $assignment_pattern . '"%s",';
+        $output .= sprintf($item_pattern, $indent_string, $key, $value);
+      }
+      else {
+        // Otherwise, creating the assignment is still simple...
+        $assignment = sprintf($assignment_pattern, $indent_string, $key);
+
+        // But we need recursion to descend another level into the incoming
+        // array.
+        $item_pattern = '%s,';
+        $value = _librarytools_format_array($value, $assignment, $indent++, $top_level = FALSE);
+        $output .= sprintf($item_pattern, $value);
+
+        // We've just finished the contents of an array, so we need to go back
+        // one step in indentation.
+        $indent--;
+      }
+    }
+  }
+
+  // Return whatever we've got to this point--first making a final pass to trim
+  // EOL and in-parentheses whitespace (this is clearer than further compli-
+  // cating the above logic).
+  $replacement_patterns = array(
+    // Finds any string ≥ 1 whitspace characters followed by a newline.
+    '#\s+\n#',
+    // Finds any string of whitepace characters (including newlines) enclosed by
+    // parentheses.
+    '#\(\s+\)#m'
+  );
+
+  $replacement_strings = array(
+    chr(10),
+    '()',
+  );
+
+  return preg_replace($replacement_patterns, $replacement_strings, $before . $output . $after);
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function librarytools_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {
+    case 'eck__entity__form_edit_librarytools_core_library_librarytools_core_library':
+      $form['#validate'][] = 'librarytools_core_library_validate';
+      break;
+  }
+}
+
+/**
+ * Callback form validation for core library entity creation form.
+ */
+function librarytools_core_library_validate(&$form, &$form_state) {
+}
 
 /**
  * Callback for admin/structure/libraries menu hook.
@@ -130,9 +251,9 @@ function librarytools_preprocess_entity(&$variables) {
       $title = $library_wrapper->label();
       $website = $library_wrapper->field_core_website->value();
       $version = $library_wrapper->field_core_version->value();
-      $js = $library_wrapper->field_core_js->value();
-      $css = $library_wrapper->field_core_css->value();
-      $dependencies = $library_wrapper->field_core_dependencies->value();
+      $js = spyc_load($library_wrapper->field_core_js->value());
+      $css = spyc_load($library_wrapper->field_core_css->value());
+      $dependencies = spyc_load($library_wrapper->field_core_dependencies->value());
 
       // Define the library.
       $library = array(
@@ -154,12 +275,18 @@ function MODULENAME_library() {
   \$libraries = array();
 
   // Define library.
-  \$libraries['%s'] = %s;
+%s
 
   // Return libraries array.
   return \$libraries;
 }
 EOT;
+
+      // We need an assignment to generate the array.
+      $assignment = sprintf('$libraries[\'%s\'] = ', $machine_name);
+
+      // Generate the array.
+      $library_array_string = _librarytools_format_array($library, $assignment, 1);
 
       // Produce the renderable array for the page.
       $variables['export'] = array(
@@ -169,7 +296,7 @@ EOT;
         '#type' => 'fieldset',
         'content' => array(
           '#type' => 'textarea',
-          '#value' => sprintf($library_pattern, $machine_name, var_export($library, TRUE)),
+          '#value' => sprintf($library_pattern, $library_array_string),
         ),
       );
       break;

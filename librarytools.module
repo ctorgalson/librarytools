@@ -236,9 +236,6 @@ function librarytools_menu() {
 
 /**
  * Implements template_preprocess_entity().
- *
- * @todo
- *  - Transform yaml
  */
 function librarytools_preprocess_entity(&$variables) {
   switch ($variables['entity_type']) {
@@ -312,6 +309,7 @@ function librarytools_preprocess_field(&$variables) {
       if ($variables['element']['#field_type'] === 'text_long') {
         $variables['theme_hook_suggestions'][] = 'field__librarytools__text_long';
       }
+
       break;
   }
 }
